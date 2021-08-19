@@ -1,4 +1,5 @@
 const { Client } = require("discord.js");
+const { DISCORD_TOKEN } = require("./config.json");
 const client = new Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
 
 client.once("ready", () => {
@@ -14,4 +15,4 @@ client.on("messageCreate", (msg) => {
   console.log(msg.content);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(DISCORD_TOKEN);
