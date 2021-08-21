@@ -47,6 +47,7 @@ function prettifyOutput(output, stopReason) {
 }
 
 function run(code) {
+  evalHistory.push(Date.now());
   try {
     const int = runGEORGE(["-c", code], {
       stdout: false,
@@ -64,6 +65,17 @@ function run(code) {
   }
 }
 
+EVAL_PER_MINUTE_LIMIT = 5;
+evalHistory = [];
+MINUTE = 60000;
+
+function shouldAcceptMessage(now) {
+  while (evalHistory.length && evalHistory[0] < now - MINUTE) {
+    evalHistory.shift();
+  }
+  return evalHistory.length < EVAL_PER_MINUTE_LIMIT;
+}
+
 client.on("messageCreate", (msg) => {
   if (msg.author.bot) return;
   const prefixMatch = prefix.exec(msg);
@@ -72,6 +84,14 @@ client.on("messageCreate", (msg) => {
   content = msg.content.slice(prefixMatch[0].length);
   const match = codeMatch(content);
   if (match !== null) {
+    const now = Date.now();
+    if (!shouldAcceptMessage(now)) {
+      const wait = (60 - (now - evalHistory[0]) / 1000).toFixed(0);
+      msg.reply(
+        `Too many eval requests in the past minute. Please wait ${wait} seconds.`
+      );
+      return;
+    }
     // no args rn
     // const args = msg.content.slice(0, match.index);
     const code = match.groups.code;
@@ -79,8 +99,6 @@ client.on("messageCreate", (msg) => {
     console.log("code", code);
     console.log("response", res);
     msg.reply(res);
-  } else {
-    console.log("no match for content", content);
   }
 });
 
