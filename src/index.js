@@ -1,5 +1,6 @@
 const { Client } = require("discord.js");
-const { DISCORD_TOKEN } = require("./config.json");
+const DISCORD_TOKEN =
+  process.env.DISCORD_TOKEN ?? require("./config.json").DISCORD_TOKEN;
 const client = new Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
 const runGEORGE = require("../GEORGE/dist/runGEORGE.js").default;
 
