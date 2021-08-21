@@ -1,0 +1,3 @@
+[submodule "GEORGE"]
+	path = GEORGE
+	url = https://github.com/jared-hughes/GEORGE.git
