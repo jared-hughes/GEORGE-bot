@@ -8,8 +8,8 @@ client.once("ready", () => {
 });
 
 const prefix = /^GEORGE\s/;
-const inlineCodeRegex = /(?<delim>``?)\n*(?<code>.*?)\n*\k<delim>/m;
-const blockCodeRegex = /```([a-z]+\n)?\n*(?<code>.*?)\n*```/im;
+const inlineCodeRegex = /(?<delim>``?)\n*(?<code>(.|\n)*?)\n*\k<delim>/;
+const blockCodeRegex = /```([a-z]+\n)?\n*(?<code>(.|\n)*?)\n*```/i;
 
 function codeMatch(msg) {
   const blockMatch = blockCodeRegex.exec(msg);
