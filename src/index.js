@@ -24,19 +24,40 @@ function codeBlock(text) {
   return "```\n" + text + "\n```\n";
 }
 
+const LINES_LIMIT = 15;
+
+const STOP_MESSAGES = {
+  DONE: ":white_check_mark: Your eval job has successfully completed.",
+  LENGTH:
+    ":roll_of_paper: Your eval job was terminated early for too much output.",
+  TIME: ":timer: Your eval job was terminated at 2 seconds of execution.",
+};
+
+function prettifyOutput(output, stopReason) {
+  if (output === "") return "(empty)";
+  lines = output.split("\n");
+  if (lines.length > LINES_LIMIT) {
+    const prefix = stopReason !== "DONE" ? "≥" : "";
+    return (
+      lines.slice(0, LINES_LIMIT).join("\n") +
+      `\n... (truncated: ${prefix}${lines.length - LINES_LIMIT} more lines)`
+    );
+  }
+  return output;
+}
+
 function run(code) {
-  // TODO: add time limit (prevent infinite loop)
-  // TODO: try-catch
-  // TODO: truncate messages with a ton of lines
   try {
-    const result = runGEORGE(["-c", code], {
+    const int = runGEORGE(["-c", code], {
       stdout: false,
       outputToString: true,
-      limitLength: 1024, // 1 kb, less than Discord's 2kb limit
+      lengthLimit: 1024, // 1 kb, less than Discord's 2kb limit
+      timeLimit: 2000, // 2s
     });
+    const stdout = int.outputString;
     return (
-      ":white_check_mark: Your eval job has successfully completed." +
-      codeBlock(result || "(empty)")
+      STOP_MESSAGES[int.stopReason] +
+      codeBlock(prettifyOutput(stdout, int.stopReason))
     );
   } catch (e) {
     return ":x: Your eval job has failed. Debug output:\n" + codeBlock(e);
