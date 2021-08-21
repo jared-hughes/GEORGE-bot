@@ -65,9 +65,18 @@ function run(code) {
   }
 }
 
-EVAL_PER_MINUTE_LIMIT = 5;
+EVAL_PER_MINUTE_LIMIT = 15;
 evalHistory = [];
 MINUTE = 60000;
+
+function getMessageCode(msg) {
+  if (msg.author.bot) return null;
+  const prefixMatch = prefix.exec(msg);
+  if (prefixMatch === null) return null;
+  content = msg.content.slice(prefixMatch[0].length);
+  const match = codeMatch(content);
+  return match?.groups.code;
+}
 
 function shouldAcceptMessage(now) {
   while (evalHistory.length && evalHistory[0] < now - MINUTE) {
@@ -76,29 +85,44 @@ function shouldAcceptMessage(now) {
   return evalHistory.length < EVAL_PER_MINUTE_LIMIT;
 }
 
-client.on("messageCreate", (msg) => {
-  if (msg.author.bot) return;
-  const prefixMatch = prefix.exec(msg);
-  if (prefixMatch === null) return;
+function evalMessageCode(code) {
+  console.log("c", code);
+  const now = Date.now();
+  if (!shouldAcceptMessage(now)) {
+    const wait = (60 - (now - evalHistory[0]) / 1000).toFixed(0);
+    return `Too many eval requests in the past minute. Please wait ${wait} seconds.`;
+  }
+  return run(code);
+}
 
-  content = msg.content.slice(prefixMatch[0].length);
-  const match = codeMatch(content);
-  if (match !== null) {
-    const now = Date.now();
-    if (!shouldAcceptMessage(now)) {
-      const wait = (60 - (now - evalHistory[0]) / 1000).toFixed(0);
-      msg.reply(
-        `Too many eval requests in the past minute. Please wait ${wait} seconds.`
-      );
-      return;
+let messageMap = {};
+
+client.on("messageCreate", async (msg) => {
+  const code = getMessageCode(msg);
+  if (code !== null) {
+    const res = evalMessageCode(code);
+    const newMessage = await msg.reply(res);
+    messageMap[msg.id] = newMessage;
+  }
+});
+
+client.on("messageUpdate", (oldMessage, newMessage) => {
+  const code = getMessageCode(newMessage);
+  if (code !== null) {
+    const res = evalMessageCode(code);
+    const oldMessageReply = messageMap[oldMessage.id];
+    if (oldMessageReply !== undefined) {
+      oldMessageReply.edit(res);
+    } else {
+      newMessage.reply(res);
     }
-    // no args rn
-    // const args = msg.content.slice(0, match.index);
-    const code = match.groups.code;
-    const res = run(code);
-    console.log("code", code);
-    console.log("response", res);
-    msg.reply(res);
+  }
+});
+
+client.on("messageDelete", (message) => {
+  const oldMessageReply = messageMap[message.id];
+  if (oldMessageReply !== undefined) {
+    oldMessageReply.delete();
   }
 });
 
