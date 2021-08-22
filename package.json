@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "postinstall": "(cd GEORGE && npm install)"
+    "postinstall": "cd GEORGE && npm install && cd -"
   },
   "repository": {
     "type": "git",
