@@ -100,8 +100,7 @@ let messageMap = {};
 
 client.on("messageCreate", async (msg) => {
   const code = getMessageCode(msg);
-  if (code !== null) {
-    await msg.channel.sendTyping();
+  if (code) {
     const res = evalMessageCode(code);
     const newMessage = await msg.reply(res);
     messageMap[msg.id] = newMessage;
@@ -110,7 +109,7 @@ client.on("messageCreate", async (msg) => {
 
 client.on("messageUpdate", async (oldMessage, newMessage) => {
   const code = getMessageCode(newMessage);
-  if (code !== null) {
+  if (code) {
     await newMessage.channel.sendTyping();
     const res = evalMessageCode(code);
     const oldMessageReply = messageMap[oldMessage.id];
